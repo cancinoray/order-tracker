@@ -1,0 +1,13 @@
+# config file version
+apiVersion: 1
+
+# Route alerts to the incident responder webhook by default.
+policies:
+  - orgId: 1
+    receiver: incident-responder
+    group_by:
+      - grafana_folder
+      - alertname
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h

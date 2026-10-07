@@ -1,0 +1,15 @@
+# config file version
+apiVersion: 1
+
+# Webhook contact point so Grafana alerts reach the incident responder
+# at POST http://responder:8001/alerts (port 8001).
+contactPoints:
+  - orgId: 1
+    name: incident-responder
+    receivers:
+      - uid: incident-responder-webhook
+        type: webhook
+        settings:
+          url: http://responder:8001/alerts
+          httpMethod: POST
+          maxAlerts: "10"

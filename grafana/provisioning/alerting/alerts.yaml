@@ -1,0 +1,82 @@
+# config file version
+apiVersion: 1
+
+# 5xx alert for the order tracker. Watches the Collector -> Prometheus
+# request metric over a 5m window. Linked to the requests dashboard.
+groups:
+  - orgId: 1
+    name: order-tracker
+    folder: order-tracker-alerts
+    interval: 30s
+    rules:
+      - uid: order-tracker-5xx
+        title: Order Tracker 5xx errors
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: Prometheus
+            model:
+              expr: sum(rate(http_server_request_count_total{http_status_code=~"5.."}[5m]))
+              range: true
+              instant: false
+              refId: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+              datasource:
+                type: prometheus
+                uid: Prometheus
+          - refId: B
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+              datasource:
+                type: __expr__
+                uid: __expr__
+          - refId: C
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              expression: B
+              refId: C
+              type: threshold
+              conditions:
+                - evaluator:
+                    params:
+                      - 0
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+        dashboardUid: order-tracker-requests
+        panelId: 3
+        noDataState: OK
+        execErrState: OK
+        for: 1m
+        annotations:
+          summary: "5xx server errors on endpoint /api/orders/{order_id}"
+          description: "Sum of rate(http_server_request_count_total{http_status_code=~\"5..\"}[5m]) over a 5m time window is above 0 for endpoint /api/orders/{order_id}."
+          endpoint: /api/orders/{order_id}
+          time_window: 5m
+          dashboard: /d/order-tracker-requests/order-tracker-requests-and-errors
+        labels:
+          severity: critical
+          endpoint: /api/orders/{order_id}
